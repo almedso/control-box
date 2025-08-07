@@ -42,12 +42,11 @@ pub fn time_range_dialog(props: &TimeRangeDialogProps) -> Html {
     let end_handle = use_state(|| updated.end.to_string());
     let end_valid_handle = use_state(|| true);
 
-    let updated =
-        updated.set_sampling_interval((*sample_interval_handle).parse::<f64>().unwrap_or_default());
-    let updated = updated.set_start((*start_handle).parse::<f64>().unwrap_or_default());
-    let updated = updated.set_end((*end_handle).parse::<f64>().unwrap_or_default());
-
-    props.handle.set(updated.clone());
+    let new_value = TimeRange::default()
+        .set_sampling_interval((*sample_interval_handle).parse::<f64>().unwrap_or_default())
+        .set_start((*start_handle).parse::<f64>().unwrap_or_default())
+        .set_end((*end_handle).parse::<f64>().unwrap_or_default());
+    props.handle.set(new_value);
 
     html! {
        <div>

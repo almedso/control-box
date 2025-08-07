@@ -8,6 +8,7 @@ use yew::prelude::*;
 use control_box::signal::*;
 
 use crate::components::step_fn::StepFunctionDialog;
+use crate::components::step_fn::TimeSignalDialogProps;
 
 use crate::components::time_signal_select::*;
 
@@ -97,7 +98,7 @@ pub fn accordeon_time_signals(props: &AccordeonTimeSignalsProps) -> Html {
 
         Callback::from(move |signal: BoxedTimeSignal<f64>| {
             info!("on_signal_type_change called for signal: {:?}", signal);
-            new_signal_to_add.set(NamedTimeSignal::<f64>::default().set_signal(signal));
+            new_signal_to_add.set(NamedTimeSignal::<f64>::default().set_signal(signal).set_name("foo".to_owned()));
         })
     };
 
@@ -133,50 +134,65 @@ pub fn accordeon_time_signals(props: &AccordeonTimeSignalsProps) -> Html {
 
 #[derive(Properties, PartialEq)]
 pub struct NameTimeSignalDialogProps {
-    #[prop_or_default]
-    pub named_time_signal: NamedTimeSignal<f64>,
     /// The state handle for managing the value of the input.
+    pub named_time_signal: NamedTimeSignal<f64>,
     pub on_update: Callback<NamedTimeSignal<f64>>,
 }
 
+
+
 #[function_component(NameTimeSignalDialog)]
 pub fn named_time_signal_dialog(props: &NameTimeSignalDialogProps) -> Html {
-    let mut updated = props.named_time_signal.clone();
+
+    let signal = use_state(||props.named_time_signal.clone());
 
     fn always_valid(_s: String) -> bool {
         true
     }
 
     let name_ref = use_node_ref();
-    let name_handle = use_state(|| updated.name.clone());
+    let name_handle = use_state(|| (*signal).name.clone());
     let name_valid_handle = use_state(|| true);
 
-    updated.name = (*name_handle).parse::<String>().unwrap_or_default();
-    info!("Updated name: {}", updated.name);
-    // props.on_update.emit(updated);
-
-    let signal_trait_object = props.named_time_signal.signal.clone();
+    let signal_trait_object = (*signal).signal.clone();
 
     // Runtime reflection (downcasting to concrete type)
     // Variable assignment must be done outside the html! macro
-    let step_fn = if let Some(step) = signal_trait_object
-        .as_any()
-        .downcast_ref::<StepFunction<f64>>()
-    {
-        step.clone()
-    } else {
-        StepFunction::<f64>::default()
+
+    // let impulse_fn = if let Some(impulse) = signal_trait_object
+    //     .as_any()
+    //     .downcast_ref::<ImpulsFunction<f64>>()
+    // {
+    //     impulse.clone()
+    // } else {
+    //     ImpulsFunction::<f64>::default()
+    // };
+    // let handle_impulse = { use_state(|| impulse_fn.clone()) };
+
+    let new_value = NamedTimeSignal::<f64>::default()
+        .set_name((*name_handle).parse::<String>().unwrap_or_default())
+        // .set_signal((*handle_signal).clone())
+        ;
+
+    let on_signal_change: Callback<BoxedTimeSignal<f64>> = {
+        let signal_state = signal.clone();
+        let emitter = props.on_update.clone();
+
+        Callback::from(|signal: BoxedTimeSignal<f64>| {
+            info!("on_signal_type_change called for signal: {:?}", signal);
+            // let new_value = new_value.set_signal(signal.clone());
+            // emitter.emit(new_value);
+        })
     };
-    let handle_step = { use_state(|| step_fn.clone()) };
-    let impulse_fn = if let Some(impulse) = signal_trait_object
-        .as_any()
-        .downcast_ref::<ImpulsFunction<f64>>()
-    {
-        impulse.clone()
-    } else {
-        ImpulsFunction::<f64>::default()
-    };
-    let handle_impulse = { use_state(|| impulse_fn.clone()) };
+
+    let emitter = props.on_update.clone();
+    emitter.emit(new_value);
+//     use_effect(move || {
+
+
+//         info!("rerender " );
+
+// });
 
     html! {
         <div class="flex flex-row">
@@ -201,13 +217,14 @@ pub fn named_time_signal_dialog(props: &NameTimeSignalDialogProps) -> Html {
 
         {
             if let Some(_) = signal_trait_object.as_any().downcast_ref::<StepFunction<f64>>() {
-                html! { <StepFunctionDialog handle={handle_step} /> }
+                // html! { format!("{}", signal_trait_object.clone()) }
+                html! { <StepFunctionDialog signal={ (*signal).clone()} onchange={on_signal_change}/> }
             } else {
                 if let Some(_) = signal_trait_object.as_any().downcast_ref::<ImpulsFunction<f64>>() {
-                    html! { format!("{}", props.named_time_signal.signal.clone()) }
+                     html! { format!("{}", signal_trait_object.clone()) }
                    // html! { <ImpulseFunctionDialog handle={handle_impulse} /> }
                 } else {
-                    html! { format!("{}", props.named_time_signal.signal.clone()) }
+                    html! { format!("{}", signal_trait_object.clone()) }
                 }
             }
         }

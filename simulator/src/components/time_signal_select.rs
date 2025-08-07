@@ -17,7 +17,7 @@ pub enum TimeSignalTypes {
 }
 
 use control_box::signal::{
-    BoxedTimeSignal, ImpulsFunction, StepFunction, SuperPosition, TimeSignalSuperTrait,
+    BoxedTimeSignal, ImpulsFunction, StepFunction, SuperPosition,
 };
 
 #[derive(Properties, PartialEq)]
