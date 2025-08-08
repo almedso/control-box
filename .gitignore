@@ -1,3 +1,7 @@
 target
 Cargo.lock
 .DS_Store
+simulator/tailwindcss
+simulator/styles/output.css*
+simulator/node_modules
+simulator/package-lock.json
